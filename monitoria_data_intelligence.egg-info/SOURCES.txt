@@ -1,0 +1,8 @@
+LICENSE
+README.md
+pyproject.toml
+data_intelligence/__init__.py
+monitoria_data_intelligence.egg-info/PKG-INFO
+monitoria_data_intelligence.egg-info/SOURCES.txt
+monitoria_data_intelligence.egg-info/dependency_links.txt
+monitoria_data_intelligence.egg-info/top_level.txt
