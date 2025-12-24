@@ -25,6 +25,8 @@ data_intelligence/infraction_index_engine/productivity_forecast/data/preprocess.
 data_intelligence/infraction_index_engine/productivity_forecast/model/predictor.py
 data_intelligence/models/Process.py
 data_intelligence/models/Worker.py
+data_intelligence/models/database.py
+data_intelligence/models/object_storage.py
 monitoria_data_intelligence.egg-info/PKG-INFO
 monitoria_data_intelligence.egg-info/SOURCES.txt
 monitoria_data_intelligence.egg-info/dependency_links.txt
