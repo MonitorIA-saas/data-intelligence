@@ -1,7 +1,9 @@
 from data_intelligence.models.Process import Process
 
 state_mapper = []
-
+with open('state_mapper.txt' , 'r') as file:
+    for line in file:
+        state_mapper.append(line)
 
 def preprocess(process: Process) -> list:
     global state_mapper
@@ -9,8 +11,11 @@ def preprocess(process: Process) -> list:
     state_value = process.state
     if state_value not in state_mapper:
         state_mapper.append(state_value)
-    state_index = state_mapper.index(state_value)
 
+        with open('state_mapper.txt' , 'a') as file:
+            file.write(state_value + '\n')
+
+    state_index = state_mapper.index(state_value)
     timestamp_int = int(process.timestamp.timestamp())
 
     return [
