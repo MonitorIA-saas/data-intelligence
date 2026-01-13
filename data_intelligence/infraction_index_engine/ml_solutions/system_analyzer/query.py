@@ -63,9 +63,9 @@ def predict(checkpoint_path, process: Process):
         raise ValueError('Inconsistent object.')
 
     if not os.path.exists(checkpoint_path):
-        model_info = create_model()
+        model_bundle = create_model()
     else:
-        model_info = create_model(checkpoint_path)
+        model_bundle = create_model(checkpoint_path)
     
-    train(model_info)
-    model_info[0].predict([process])
+    train(model_bundle)
+    model_bundle[0].predict([process])
