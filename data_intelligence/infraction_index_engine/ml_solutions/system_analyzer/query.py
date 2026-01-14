@@ -1,11 +1,12 @@
 from data_intelligence.models.Process import Process, ProcessState
-from data_intelligence.infraction_index_engine.ml_solutions.system_analyzer.model import create_model, train
+from data_intelligence.infraction_index_engine.ml_solutions.system_analyzer.model import create_model
 import os
+import joblib
 from bson import ObjectId
 from datetime import datetime
+import numpy as np
 
 def verify(process: Process) -> bool:
-    # Type checks
     if not all([
         isinstance(process._id, ObjectId),
         isinstance(process.ocorrencia_id, ObjectId),
@@ -23,7 +24,6 @@ def verify(process: Process) -> bool:
     ]):
         return False
 
-    # Value ranges
     if not all([
         process.PID > 0,
         process.allocated_memory >= 0,
@@ -36,7 +36,6 @@ def verify(process: Process) -> bool:
     ]):
         return False
 
-    # State logic
     if process.state == ProcessState.TERMINATED:
         if not all([process.cpu_usage == 0, process.gpu_usage == 0, process.io_usage == 0]):
             return False
@@ -49,7 +48,6 @@ def verify(process: Process) -> bool:
         if not any([process.cpu_usage > 0, process.gpu_usage > 0, process.io_usage > 0]):
             return False
 
-    # Temporal coherence
     if process.timestamp > datetime.utcnow():
         return False
     if process.execution_time < process.cpu_time:
@@ -57,15 +55,46 @@ def verify(process: Process) -> bool:
 
     return True
 
-def predict(checkpoint_path, process: Process):
 
+def process_to_features(process: Process) -> np.ndarray:
+    return np.array([
+        process.PID,
+        process.priority,
+        process.allocated_memory,
+        process.program_counter,
+        process.cpu_usage,
+        process.gpu_usage,
+        process.io_usage,
+        process.cpu_time,
+        process.execution_time,
+        process.state.value,
+    ], dtype=float)
+
+
+def load_or_create_model(checkpoint_path: str):
+    if os.path.exists(checkpoint_path):
+        return joblib.load(checkpoint_path)
+    return create_model(checkpoint_path)
+
+
+def save_model(model_bundle, checkpoint_path: str):
+    joblib.dump(model_bundle, checkpoint_path)
+
+
+def predict(checkpoint_path: str, process: Process, incremental: bool = False):
     if not verify(process):
-        raise ValueError('Inconsistent object.')
+        raise ValueError("Inconsistent object.")
 
-    if not os.path.exists(checkpoint_path):
-        model_bundle = create_model()
-    else:
-        model_bundle = create_model(checkpoint_path)
-    
-    train(model_bundle)
-    model_bundle[0].predict([process])
+    model_bundle = load_or_create_model(checkpoint_path)
+
+    X = np.array([process_to_features(process)])
+
+    if not incremental:
+        X_scaled = model_bundle["scaler"].transform(X)
+        return model_bundle["model"].predict(X_scaled)
+
+    X_scaled = model_bundle["scaler"].transform(X)
+    model_bundle["model"].partial_fit(X_scaled)
+    save_model(model_bundle, checkpoint_path)
+
+    return model_bundle["model"].predict(X_scaled)

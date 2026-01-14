@@ -4,12 +4,10 @@ import joblib
 import numpy as np
 import os
 
-CHECKPOINT_PATH = "model_checkpoint.joblib"
-
-def create_model(checkpoint_path=CHECKPOINT_PATH):
+def create_model(checkpoint_path):
     global CHECKPOINT_PATH
 
-    if os.path.exists(checkpoint_path) and checkpoint_path != CHECKPOINT_PATH:
+    if os.path.exists(checkpoint_path):
         return joblib.load(checkpoint_path)
 
     model_bundle = {
@@ -25,7 +23,7 @@ def create_model(checkpoint_path=CHECKPOINT_PATH):
     joblib.dump(model_bundle, checkpoint_path)
     return model_bundle
 
-def train(train_data, model_bundle, checkpoint_path=CHECKPOINT_PATH, incremental=False):
+def train(train_data, model_bundle, checkpoint_path, incremental=False):
     X = np.array(train_data)
 
     if not incremental:

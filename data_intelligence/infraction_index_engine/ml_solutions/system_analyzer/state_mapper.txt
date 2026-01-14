@@ -1,0 +1,4 @@
+ProcessState.NEW
+ProcessState.RUNNING
+ProcessState.WAITING
+ProcessState.TERMINATED
