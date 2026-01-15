@@ -38,7 +38,7 @@ def train(train_data, model_bundle, checkpoint_path, incremental=False):
 
     # Update threshold
     scores = [model_bundle['model'].decision_function([process]) for process in train_data]
-    model_bundle['threshold'] = np.percentile(scores, 20)
+    model_bundle['threshold'] = np.percentile(scores, 10)
 
 
     joblib.dump(model_bundle, checkpoint_path)
