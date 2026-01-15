@@ -17,7 +17,8 @@ def create_model(checkpoint_path):
             replace_rate=0.1,
             random_state=1
         ),
-        "scaler": StandardScaler()
+        "scaler": StandardScaler(),
+        "threshold": -0.015
     }
 
     joblib.dump(model_bundle, checkpoint_path)
@@ -27,10 +28,17 @@ def train(train_data, model_bundle, checkpoint_path, incremental=False):
     X = np.array(train_data)
 
     if not incremental:
-        X_scaled = model_bundle["scaler"].fit_transform(X)
+        model_bundle["scaler"].fit(X)
+        X_scaled = model_bundle["scaler"].transform(X)
         model_bundle["model"].fit(X_scaled)
     else:
+        model_bundle["scaler"].partial_fit(X)
         X_scaled = model_bundle["scaler"].transform(X)
         model_bundle["model"].partial_fit(X_scaled)
+
+    # Update threshold
+    scores = [model_bundle['model'].decision_function([process]) for process in train_data]
+    model_bundle['threshold'] = np.percentile(scores, 20)
+
 
     joblib.dump(model_bundle, checkpoint_path)

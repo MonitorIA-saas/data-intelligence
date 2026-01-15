@@ -89,12 +89,16 @@ def predict(checkpoint_path: str, process: Process, incremental: bool = False):
 
     X = np.array([process_to_features(process)])
 
+    print('THRESHOLD: ' + str(model_bundle['threshold']))
+
     if not incremental:
         X_scaled = model_bundle["scaler"].transform(X)
-        return model_bundle["model"].predict(X_scaled)
-
+        print(model_bundle["model"].decision_function(X_scaled)[0])
+        return -1 if model_bundle["model"].decision_function(X_scaled)[0] < model_bundle['threshold'] else 1
+    
     X_scaled = model_bundle["scaler"].transform(X)
     model_bundle["model"].partial_fit(X_scaled)
     save_model(model_bundle, checkpoint_path)
-
-    return model_bundle["model"].predict(X_scaled)
+    print(model_bundle["model"].decision_function(X_scaled)[0])
+    
+    return -1 if model_bundle["model"].decision_function(X_scaled)[0] < model_bundle['threshold'] else 1
