@@ -10,7 +10,7 @@ with open("tests\system_analyzer\processes.csv", mode="r") as file:
     reader = csv.DictReader(file)
     for row in reader:
         process = Process(
-            _id=ObjectId(),  # gera novo ID
+            _id=ObjectId(),
             ocorrencia_id=ObjectId(),
             PID=int(row["PID"]),
             priority=int(row["priority"]),
@@ -21,32 +21,51 @@ with open("tests\system_analyzer\processes.csv", mode="r") as file:
             io_usage=int(row["io_usage"]),
             cpu_time=int(row["cpu_time"]),
             execution_time=int(row["execution_time"]),
-            state=ProcessState[row["state"]],  # converte string para enum
+            state=ProcessState[row["state"]],
             timestamp=datetime.fromisoformat(row["timestamp"])
         )
         processes.append(process)
 
+normal_process = Process(
+    _id=ObjectId(),
+    ocorrencia_id=ObjectId(),
+    PID=100,
+    priority=2,
+    allocated_memory=512,
+    program_counter=150,
+    cpu_usage=15,
+    gpu_usage=0,
+    io_usage=10,
+    cpu_time=150,
+    execution_time=250,
+    state=ProcessState.RUNNING,
+    timestamp=datetime.utcnow() - timedelta(seconds=50)
+)
 
-# --- Process used for prediction ---
-normal_process = Process( _id=ObjectId(), ocorrencia_id=ObjectId(), PID=100, priority=2, allocated_memory=512, program_counter=150, cpu_usage=15, gpu_usage=0, io_usage=10, cpu_time=150, execution_time=250, state=ProcessState.RUNNING, timestamp=datetime.utcnow() - timedelta(seconds=50) )
+anomalous_process = Process(
+    _id=ObjectId(),
+    ocorrencia_id=ObjectId(),
+    PID=201,
+    priority=10,
+    allocated_memory=16384,
+    program_counter=999999,
+    cpu_usage=100,
+    gpu_usage=100,
+    io_usage=100,
+    cpu_time=5000,
+    execution_time=5000,
+    state=ProcessState.RUNNING,
+    timestamp=datetime.utcnow() - timedelta(seconds=1)
+)
 
-anomalous_process = Process( _id=ObjectId(), ocorrencia_id=ObjectId(), PID=201, priority=10, allocated_memory=16384, program_counter=999999, cpu_usage=100, gpu_usage=100, io_usage=100, cpu_time=5000, execution_time=5000, state=ProcessState.RUNNING, timestamp=datetime.utcnow() - timedelta(seconds=1) )
-
-
-
-# Path where the model checkpoint will be saved
 checkpoint_path = "49949230861"
 
-# Create or load the model
 model_bundle = model.create_model(checkpoint_path)
 
-# Preprocess training data (convert Process objects into feature vectors)
 train_data = preprocess(processes)
 
-# Train the model with the sample processes
 model.train(train_data, model_bundle, checkpoint_path, incremental=False)
 
-# Make a prediction for the test process
 try:
     prediction = query.predict(checkpoint_path, anomalous_process, incremental=False)
     print("Prediction for test process (anomalous):", prediction)
